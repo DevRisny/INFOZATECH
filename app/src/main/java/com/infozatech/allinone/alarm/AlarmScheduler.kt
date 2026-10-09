@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.infozatech.allinone.MainActivity
 import com.infozatech.allinone.data.Alarm
 import java.time.ZonedDateTime
@@ -50,7 +51,13 @@ class AlarmScheduler(private val context: Context) {
             Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE,
         )
-        alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAtMillis, showIntent), operation)
+        try {
+            alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAtMillis, showIntent), operation)
+        } catch (e: SecurityException) {
+            // The system refused to schedule the alarm (permission missing).
+            // Do not crash the app; the alarm stays saved and is armed next time.
+            Log.w("AlarmScheduler", "Could not schedule alarm: ${e.message}")
+        }
     }
 
     private fun firePendingIntent(alarmId: Long, snoozed: Boolean, flags: Int): PendingIntent? {
